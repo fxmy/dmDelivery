@@ -1,7 +1,7 @@
 dmDelivery
 ==========
 
-message delivery system written in Erlang
+online chat written in Erlang
 
 based on Cowboy's websocket
 
