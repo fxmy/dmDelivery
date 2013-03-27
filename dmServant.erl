@@ -14,3 +14,10 @@ start( Group, Nick) ->
 	ServantPid ! { Group, Nick},
 	
 	ServantPid.
+
+%% loop/1 does the real work
+%% receives message from the user and dispatch to others
+%% 
+%% receives & responses command form dmMaster
+%%
+%% when the user list goes empty( means all users exited), atomatically exit self
