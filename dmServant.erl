@@ -43,3 +43,18 @@ loop( GroupList) ->
 				GroupList),
 			loop( GroupList);
 
+		{logout, Nick, From} ->
+			%% received from clients
+			%% remove the client from GroupList
+			%% then notify dmMaster the new OnlineNum
+			GroupListNew = lists:delete({Nick, From}),
+			OnlineNumNew = erlang:length(GroupListNew),
+			dmMaster ! {clientExit, OnlineNumNew, self()},
+			loop( GroupListNew);
+		
+		%% everybody leaves,
+		%% dmMaster sends kill signal
+		{killServant} ->
+			true
+end.
+
