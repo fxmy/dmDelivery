@@ -11,7 +11,7 @@ start( Group, Nick) ->
 	register( Group, ServantPid),
 
 	%% sends the FIRST logged user
-	ServantPid ! {login, Group, Nick},
+	ServantPid ! {login, Nick, From},
 	
 	ServantPid.
 
@@ -27,7 +27,19 @@ loop( GroupList) ->
 		{login, Nick, From} ->
 			%% sends from ws_handler:OnInit, forwarded by dmMaster
 			%% responses to ws_handler's PID of 
-			%% {loginOK, OnlineNum, [OnlineLit]}
+			%% {loginOK, OnlineNum, [OnlineList]}
 			%% then handles by ws_handler's OnInit
-			GroupListNew = [Nick | GroupList],
+			GroupListNew = [ {Nick,From} | GroupList],
+			OnlineNum = erlang:length(GroupListNew),
+			From ! {loginOK, OnlineNum, GroupListNew},
+			loop( GroupListNew);
+
+		{chat, Nick, Text, From} ->
+			%% msgs from clients handled here
+			%% dispatch Text to every member in GroupList
+			lists:foreach( fun({Nick,From})->
+						From ! {chatUpdate, Nick, Text}
+				end,
+				GroupList),
+			loop( GroupList);
 
