@@ -1,0 +1,12 @@
+dmMaster ------ controls many dmServants, manages client number of each group.
+
+ws_handler -------- OnInit ->
+			sends init msg to dmMaster
+		--- OnMsgArrive ->
+			sends msg to dmServant
+		--- OnTimeOut ->
+			retriveMsg -------- holds here forever if there's no msg
+
+dynanmic routing ------ to automatically create channels
+
+JS stuff ------- makes webpage more friendly
