@@ -11,7 +11,7 @@ start( Group, Nick) ->
 	register( Group, ServantPid),
 
 	%% sends the FIRST logged user
-	ServantPid ! { Group, Nick},
+	ServantPid ! {login, Group, Nick},
 	
 	ServantPid.
 
@@ -20,4 +20,14 @@ start( Group, Nick) ->
 %% 
 %% receives & responses command form dmMaster
 %%
-%% when the user list goes empty( means all users exited), atomatically exit self
+%% when the user list goes empty( means all users exited), dmMaster will send a msg thus stop the Servant
+
+loop( GroupList) ->
+	receive
+		{login, Nick, From} ->
+			%% sends from ws_handler:OnInit, forwarded by dmMaster
+			%% responses to ws_handler's PID of 
+			%% {loginOK, OnlineNum, [OnlineLit]}
+			%% then handles by ws_handler's OnInit
+			GroupListNew = [Nick | GroupList],
+
