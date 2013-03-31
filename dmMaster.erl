@@ -15,11 +15,13 @@ start( _Type, _Args) ->
 	%% start the dmMaster.
 	%% regiter as dmMaster
 	%% trap_exit => true to track those dmServants and restart them should they crash
-	%% initialize a Set of {DmServantName, {DmServantPid, OnlineNum}} to hold dmServants' info
+	%% initialize a Set of 
+	%% **{DmServantName, {DmServantPid, OnlineNum}}**
+	%% 	to hold dmServants' info
 	%% then start_links with supervisor by calling dmMaster_sup:start_link
 	%% and finally goes into the main loop
 	register(dmMaster, self()),
-	ServantSet = ets:new( dmMasterSet, [ordered_set]),
+	ServantSet = ets:new( dmMasterSet, [set]),
 	process_flag( trap_exit, true),
 	dmMaster_sup:start_link(),
 	loop(ServantSet).
