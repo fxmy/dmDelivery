@@ -16,7 +16,7 @@ start( _Type, _Args) ->
 	%% regiter as dmMaster
 	%% trap_exit => true to track those dmServants and restart them should they crash
 	%% initialize a Set of 
-	%% **{DmServantName, {DmServantPid, OnlineNum}}**
+	%% **{DmServantName, DmServantPid, OnlineNum}**
 	%% 	to hold dmServants' info
 	%% then start_links with supervisor by calling dmMaster_sup:start_link
 	%% and finally goes into the main loop
@@ -43,4 +43,26 @@ loop( ServantSet) ->
 			%% if exits, relay the signal to the particular dmServant
 			%% if not, call dmServant:start( Group, Nick) to spwan a new dmServant
 			%% 	and then relay the signal
+			case ets:lookup( dmMaster, Group) of
+				[] ->
+					%% no one has logged in yet, start a new chat group
+					DmServantPid = dmServant:start( Group, Nick, From),
+					ets:insert( ServantSet, {Group, DmServantPid, 1}),
+					Group ! {login, Nick, From},
+					loop( ServantSet);
+				[{Group, DmServantPid, OnlineNum}] ->
+					ets:update_element(ServantSet, Group, {3, OnlineNum+1}),
+					Group ! {login, Nick, From},
+					loop( ServantSet)
+			end;
+		{'EXIT', Pid, Why} ->
+			%% a dmServant crashed
+			%% retrive crashed dmServantName & OnlineNum
+			[[ServantName, OnlineNum]] = ets:match( ServantSet, {'$1', Pid, '$2'}),
+			io:format( "dmMaster : Process ~p of name ~p crashed because of ~p, ~p Users logged in it~n",
+				[pid_to_list(Pid),ServantName,Why,OnlineNum]),
+			%% TODO restart a new dmServant
+			%% TODO call ClientsPreserver to send old OnlineETS to the new dmServant
 
+
+	end.

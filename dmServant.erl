@@ -1,12 +1,12 @@
 -module(dmServant).
--export([start/2, stop/1]).
+-export([start/3, stop/1]).
 
 %% called by dmMaster to start a brand new dmServant for a new chat channel
 %% holds a List of online users
 %%
 %%
 
-start( Group, Nick) ->
+start( Group, Nick, From) ->
 	ServantPid = spawn_link( fun loop/1),
 	register( Group, ServantPid),
 
@@ -54,7 +54,7 @@ loop( GroupList) ->
 		
 		%% everybody leaves,
 		%% dmMaster sends kill signal
-		{killServant} ->
+		{endServant} ->
 			true
 end.
 
