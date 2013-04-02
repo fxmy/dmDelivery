@@ -23,8 +23,9 @@ start( _Type, _Args) ->
 	register(dmMaster, self()),
 	ServantSet = ets:new( dmMasterSet, [set]),
 	process_flag( trap_exit, true),
+	Preserver = dmClientPreserver:start(),
 	dmMaster_sup:start_link(),
-	loop(ServantSet).
+	loop({ServantSet, Preserver}).
 
 
 

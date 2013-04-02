@@ -73,7 +73,7 @@ loop( GroupTable) ->
 		
 		%% everybody leaves,
 		%% dmMaster sends kill signal
-		{endServant} ->
+		endServant ->
 			true
 end.
 
