@@ -1,5 +1,5 @@
 -module(dmServant).
--export([start/4, stop/1]).
+-export([start/4, stop/1, reboot/1]).
 
 %% called by dmMaster to start a brand new dmServant for a new chat channel
 %% holds a List of online users
@@ -19,6 +19,15 @@ start( Group, Nick, From, PreserverPid) ->
 	ServantPid ! {login, Nick, From},
 	
 	ServantPid.
+
+stop(_State) ->
+	true.
+
+reboot(Group) ->
+	ServantPid = spawn_link( dmServant,loop,[]),
+	register(Group, ServantPid),
+	ServantPid.
+
 
 %% loop/1 does the real work
 %% receives message from the user and dispatch to others

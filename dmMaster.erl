@@ -29,12 +29,12 @@ start( _Type, _Args) ->
 
 
 
-stop() ->
+stop(_State) ->
 	ok.
 
 
 
-loop( ServantSet) ->
+loop( {ServantSet, Preserver}) ->
 	%% handles {login,Group,Nick,Pid} signal from client
 	%% and {clientExit, OnlineNum, Pid} signal from dmServant
 	%% should also handle dmServant's unnormal EXIT signal
@@ -47,23 +47,53 @@ loop( ServantSet) ->
 			case ets:lookup( dmMaster, Group) of
 				[] ->
 					%% no one has logged in yet, start a new chat group
-					DmServantPid = dmServant:start( Group, Nick, From),
+					DmServantPid = dmServant:start( Group, Nick, From, Preserver),
 					ets:insert( ServantSet, {Group, DmServantPid, 1}),
-					Group ! {login, Nick, From},
-					loop( ServantSet);
 				[{Group, DmServantPid, OnlineNum}] ->
 					ets:update_element(ServantSet, Group, {3, OnlineNum+1}),
-					Group ! {login, Nick, From},
-					loop( ServantSet)
-			end;
-		{'EXIT', Pid, Why} ->
-			%% a dmServant crashed
-			%% retrive crashed dmServantName & OnlineNum
-			[[ServantName, OnlineNum]] = ets:match( ServantSet, {'$1', Pid, '$2'}),
-			io:format( "dmMaster : Process ~p of name ~p crashed because of ~p, ~p Users logged in it~n",
-				[pid_to_list(Pid),ServantName,Why,OnlineNum]),
-			%% TODO restart a new dmServant
-			%% TODO call ClientsPreserver to send old OnlineETS to the new dmServant
+			end
+			Group ! {login, Nick, From},
+			loop({ServantSet, Preserver});
 
+		{clientExit, OnlineNum, From} ->
+			%% get Servant's registered name by calling process_info( Pid, registered_name)
+			%% then update ServantSet
+			{registered_name, ServantName} = process_info(From,registered_name),
+			case OnlineNum of
+				0 ->
+					ServantName ! endServant,
+					ets:delete(ServantSet,ServantName);
+				Any ->
+					ets:insert( ServantSet, ServantName, From, OnlineNum)
+			end,
+			loop({ServantSet,Preserver});
+
+			
+		{'EXIT', Pid, Why} ->
+			%% A dmServant crashed
+			%% or THE dmClientPreserver crashed
+			case Pid of
+				Preserver ->
+					io:format("Preserver ~p crashed because of ~p~n",
+						[pid_to_list(Pid),Why]),
+					NewPreserver = dmClientPreserver:start(),
+					loop({ServantSet, NewPreserver});
+				Any ->
+					%% dmServant crashed, lookup the registered name,
+					%% reboot it then send transOwner signal to dmPreserver
+					[[ServantName, OnlineNum]] = ets:match( ServantSet, {'$1', Pid, '$2'}),
+					io:format( "dmMaster : Process ~p of name ~p crashed because of ~p, ~p Users logged in it~n",[pid_to_list(Pid),ServantName,Why,OnlineNum]),
+
+					NewServant = dmServant:reboot(),
+					ets:insert( ServantSet, {ServantName, NewServant, OnlineNum}),
+					dmClientPreserver ! {transOwner,ServantName,NewServant}
+			end,
+			loop({ServantSet,Preserver});
+
+
+		{rebootDone,ServantName,From,OnlineNum} ->
+			%% dmServant rebooted and received preserved clientSet, back into normal
+			ets:insert( ServantSet, {ServantName,From,OnlineNum}),
+			loop({ServantSet,Preserver});
 
 	end.

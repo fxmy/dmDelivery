@@ -1,6 +1,6 @@
-redesign architecture, add dmClientPreserver ------ to automatically hold old online clients in case of dmServant crashes
+#redesign architecture, add dmClientPreserver ------ to automatically hold old online clients in case of dmServant crashes
 
-chang dmServant's online LIST to an ets table, thus it can be inheritted to the ClientPreserver when crashes
+#chang dmServant's online LIST to an ets table, thus it can be inheritted to the ClientPreserver when crashes
 
 add new msg routes between dmMaster, dmServant, dmClientPreserver for crash state preserve
 
