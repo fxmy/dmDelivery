@@ -1,5 +1,5 @@
 -module(dmServant).
--export([start/4, stop/1, reboot/1]).
+-export([start/4, stop/1, reboot/1,loop/1]).
 
 %% called by dmMaster to start a brand new dmServant for a new chat channel
 %% holds a List of online users
@@ -7,7 +7,7 @@
 %%
 
 start( Group, Nick, From, PreserverPid) ->
-	ServantPid = spawn_link( dmServant, loop, []),
+	ServantPid = spawn_link( dmServant, loop, [dontCare]),
 	register( Group, ServantPid),
 
 	%% set up a TABLE to hold logged clients, then give_away to ServantPid
@@ -24,7 +24,7 @@ stop(_State) ->
 	true.
 
 reboot(Group) ->
-	ServantPid = spawn_link( dmServant,loop,[]),
+	ServantPid = spawn_link( dmServant,loop,[dontCare]),
 	register(Group, ServantPid),
 	ServantPid.
 
@@ -42,6 +42,7 @@ loop( GroupTable) ->
 			%% sended from master for initialization
 			%% or from the dmClientPreserver for clients preserver
 			%% on both condition, dmServant just need to take the new table
+			io:format("INFO:ETS-TRANSFER,channel ~p~n",[GiftData]),
 			loop(TabID);
 
 		{login, Nick, From} ->
@@ -57,6 +58,7 @@ loop( GroupTable) ->
 			OnlineNum = ets:info( GroupTable, size),
 			OnlineUser = ets:foldl( getOnlineUser, [], GroupTable),
 			From ! {loginOK, OnlineNum, OnlineUser},
+			ets:foldl(dispatchOnlineUser,OnlineUser,GroupTable),
 			loop( GroupTable);
 
 		{chat, Nick, Text, _From} ->
@@ -78,6 +80,8 @@ loop( GroupTable) ->
 			%OnlineNumNew = erlang:length(GroupListNew),
 			OnlineNumNew = ets:info( GroupTable, size),
 			dmMaster ! {clientExit, OnlineNumNew, self()},
+			OnlineUser = ets:foldl( getOnlineUser, [], GroupTable),
+			ets:foldl(dispatchOnlineUser,OnlineUser,GroupTable),
 			loop( GroupTable);
 		
 		%% everybody leaves,
@@ -95,3 +99,7 @@ getOnlineUser({Nick, _Pid}, OnlineUser) ->
 dispatchChat({_Nick, Pid}, {Nick, Text}) ->
 	Pid ! {chatUpdate, Nick, Text},
 	{Nick, Text}.
+
+dispacthOnlineUser( {Nick,Pid}, OnlineUser) ->
+	Pid ! {onLineUserUpdate,OnlineUser},
+	OnlineUser.
