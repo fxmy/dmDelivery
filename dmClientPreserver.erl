@@ -25,6 +25,7 @@ loop( Preserved) ->
 		{'ETS-TRANSFER', TableId, _FromPid, HeirData} ->
 			%% dmServat crashed
 			%% HeirData will be the group name
+			io:format("INFO:received ETS-TRANSFER,channel ~p~n",[HeirData]),
 			ets:insert(Preserved, {HeirData, TableId}),
 			loop(Preserved);
 
