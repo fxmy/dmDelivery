@@ -19,6 +19,7 @@ loop( Preserved) ->
 		init ->
 			%% Master send init signal, set up a empty SET of {channel, tid()}
 			PreservedTable = ets:new(preservedTable, [set]),
+			io:format("INFO:Preserver inited~n"),
 			loop(PreservedTable);
 
 		{'ETS-TRANSFER', TableId, _FromPid, HeirData} ->
