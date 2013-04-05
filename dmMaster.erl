@@ -48,10 +48,10 @@ loop( {ServantSet, Preserver}) ->
 				[] ->
 					%% no one has logged in yet, start a new chat group
 					DmServantPid = dmServant:start( Group, Nick, From, Preserver),
-					ets:insert( ServantSet, {Group, DmServantPid, 1}),
-				[{Group, DmServantPid, OnlineNum}] ->
-					ets:update_element(ServantSet, Group, {3, OnlineNum+1}),
-			end
+					ets:insert( ServantSet, {Group, DmServantPid, 1});
+				[{Group, _DmServantPid, OnlineNum}] ->
+					ets:update_element(ServantSet, Group, {3, OnlineNum+1})
+			end,
 			Group ! {login, Nick, From},
 			loop({ServantSet, Preserver});
 
@@ -63,7 +63,7 @@ loop( {ServantSet, Preserver}) ->
 				0 ->
 					ServantName ! endServant,
 					ets:delete(ServantSet,ServantName);
-				Any ->
+				_Any ->
 					ets:insert( ServantSet, ServantName, From, OnlineNum)
 			end,
 			loop({ServantSet,Preserver});
@@ -78,7 +78,7 @@ loop( {ServantSet, Preserver}) ->
 						[pid_to_list(Pid),Why]),
 					NewPreserver = dmClientPreserver:start(),
 					loop({ServantSet, NewPreserver});
-				Any ->
+				_Any ->
 					%% dmServant crashed, lookup the registered name,
 					%% reboot it then send transOwner signal to dmPreserver
 					[[ServantName, OnlineNum]] = ets:match( ServantSet, {'$1', Pid, '$2'}),
@@ -88,12 +88,12 @@ loop( {ServantSet, Preserver}) ->
 					ets:insert( ServantSet, {ServantName, NewServant, OnlineNum}),
 					dmClientPreserver ! {transOwner,ServantName,NewServant}
 			end,
-			loop({ServantSet,Preserver});
+			loop({ServantSet,Preserver})
 
 
-		{rebootDone,ServantName,From,OnlineNum} ->
+		%%{rebootDone,ServantName,From,OnlineNum} ->
 			%% dmServant rebooted and received preserved clientSet, back into normal
-			ets:insert( ServantSet, {ServantName,From,OnlineNum}),
-			loop({ServantSet,Preserver});
+			%%ets:insert( ServantSet, {ServantName,From,OnlineNum}),
+			%%loop({ServantSet,Preserver});
 
 	end.

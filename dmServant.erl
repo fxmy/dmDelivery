@@ -38,7 +38,7 @@ reboot(Group) ->
 
 loop( GroupTable) ->
 	receive
-		{'ETS-TRANSFER',TabID, FromPid, GiftData} ->
+		{'ETS-TRANSFER',TabID, _FromPid, GiftData} ->
 			%% sended from master for initialization
 			%% or from the dmClientPreserver for clients preserver
 			%% on both condition, dmServant just need to take the new table
@@ -57,8 +57,8 @@ loop( GroupTable) ->
 			ets:insert(GroupTable, {Nick, From}),
 			OnlineNum = ets:info( GroupTable, size),
 			OnlineUser = ets:foldl( getOnlineUser, [], GroupTable),
-			From ! {loginOK, OnlineNum, OnlineUser},
-			ets:foldl(dispatchOnlineUser,OnlineUser,GroupTable),
+			From ! loginOK,
+			ets:foldl(dispatchOnlineUser,{OnlineNum,OnlineUser},GroupTable),
 			loop( GroupTable);
 
 		{chat, Nick, Text, _From} ->
@@ -100,6 +100,6 @@ dispatchChat({_Nick, Pid}, {Nick, Text}) ->
 	Pid ! {chatUpdate, Nick, Text},
 	{Nick, Text}.
 
-dispacthOnlineUser( {Nick,Pid}, OnlineUser) ->
-	Pid ! {onLineUserUpdate,OnlineUser},
+dispacthOnlineUser( {_Nick,Pid}, {OnlineNum,OnlineUser}) ->
+	Pid ! {onLineUserUpdate,OnlineNum,OnlineUser},
 	OnlineUser.
