@@ -2,9 +2,11 @@
 
 #chang dmServant's online LIST to an ets table, thus it can be inheritted to the ClientPreserver when crashes
 
-add new msg routes between dmMaster, dmServant, dmClientPreserver for crash state preserve
+#add new msg routes between dmMaster, dmServant, dmClientPreserver for crash state preserve
 
-dmMaster ------ controls many dmServants, manages client number of each group.
+#dmMaster ------ controls many dmServants, manages client number of each group.
+
+conversions between binary & list/tuple
 
 ws_handler -------- OnInit ->
 			sends init msg to dmMaster
