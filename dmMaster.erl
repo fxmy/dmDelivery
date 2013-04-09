@@ -3,15 +3,17 @@
 
 
 -export([start/2,stop/1]).
+-export([realstart/2]).
 
 %% dmMaster tracks many dmServants
 %% handles the very first login message of chat users in a same chat group( that is served in a same dmServant)
 %%
 %% when a group's OnlineNum goes zero, sends kill signal to the conresponding dmServant
 %%
+start( _Type,_Args) ->
+	spawn( ?MODULE, realstart,[dontcare,dontcare]).
 
-
-start( _Type, _Args) ->
+realstart( _Type, _Args) ->
 	%% start the dmMaster.
 	%% regiter as dmMaster
 	%% trap_exit => true to track those dmServants and restart them should they crash
@@ -24,7 +26,7 @@ start( _Type, _Args) ->
 	ServantSet = ets:new( dmMasterSet, [set]),
 	process_flag( trap_exit, true),
 	Preserver = dmClientPreserver:start(),
-	dmMaster_sup:start_link(),
+	%dmMaster_sup:start_link(),
 	loop({ServantSet, Preserver}).
 
 
@@ -44,15 +46,16 @@ loop( {ServantSet, Preserver}) ->
 			%% if exits, relay the signal to the particular dmServant
 			%% if not, call dmServant:start( Group, Nick) to spwan a new dmServant
 			%% 	and then relay the signal
-			case ets:lookup( dmMaster, Group) of
+			case ets:lookup( ServantSet, Group) of
 				[] ->
 					%% no one has logged in yet, start a new chat group
 					DmServantPid = dmServant:start( Group, Nick, From, Preserver),
 					ets:insert( ServantSet, {Group, DmServantPid, 1});
 				[{Group, _DmServantPid, OnlineNum}] ->
+					Group ! {login, Nick, From},
 					ets:update_element(ServantSet, Group, {3, OnlineNum+1})
 			end,
-			Group ! {login, Nick, From},
+			%Group ! {login, Nick, From},
 			loop({ServantSet, Preserver});
 
 		{clientExit, OnlineNum, From} ->
@@ -84,7 +87,7 @@ loop( {ServantSet, Preserver}) ->
 					[[ServantName, OnlineNum]] = ets:match( ServantSet, {'$1', Pid, '$2'}),
 					io:format( "dmMaster : Process ~p of name ~p crashed because of ~p, ~p Users logged in it~n",[pid_to_list(Pid),ServantName,Why,OnlineNum]),
 
-					NewServant = dmServant:reboot(),
+					NewServant = dmServant:reboot( ServantName),
 					ets:insert( ServantSet, {ServantName, NewServant, OnlineNum}),
 					dmClientPreserver ! {transOwner,ServantName,NewServant}
 			end,

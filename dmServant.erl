@@ -1,5 +1,6 @@
 -module(dmServant).
 -export([start/4, stop/1, reboot/1,loop/1]).
+%-export([getOnlineUser/2,dispatchChat/2,dispacthOnlineUser/2]).
 
 %% called by dmMaster to start a brand new dmServant for a new chat channel
 %% holds a List of online users
@@ -53,12 +54,14 @@ loop( GroupTable) ->
 			%GroupListNew = [ {Nick,From} | GroupList],
 			%OnlineNum = erlang:length(GroupListNew),
 			%From ! {loginOK, OnlineNum, GroupListNew},
-			
+			io:format("logged in : Nick,From ~p ~p~n", [Nick, pid_to_list(From)]),
 			ets:insert(GroupTable, {Nick, From}),
 			OnlineNum = ets:info( GroupTable, size),
-			OnlineUser = ets:foldl( getOnlineUser, [], GroupTable),
+			io:format("size ~p~n",[OnlineNum]),
+			OnlineUser = ets:foldl( fun getOnlineUser/2, [], GroupTable),
+			io:format("OnlineUser: ~p~n",[OnlineUser]),
 			From ! loginOK,
-			ets:foldl(dispatchOnlineUser,{OnlineNum,OnlineUser},GroupTable),
+			ets:foldl(fun dispatchOnlineUser/2,{OnlineNum,OnlineUser},GroupTable),
 			loop( GroupTable);
 
 		{chat, Nick, Text, _From} ->
@@ -68,7 +71,7 @@ loop( GroupTable) ->
 			%			From ! {chatUpdate, Nick, Text}
 			%	end,
 			%	GroupList),
-			ets:foldl(dispatchChat, {Nick,Text}, GroupTable),
+			ets:foldl( fun dispatchChat/2, {Nick,Text}, GroupTable),
 			loop( GroupTable);
 
 		{logout, Nick, From} ->
@@ -80,7 +83,7 @@ loop( GroupTable) ->
 			%OnlineNumNew = erlang:length(GroupListNew),
 			OnlineNumNew = ets:info( GroupTable, size),
 			dmMaster ! {clientExit, OnlineNumNew, self()},
-			OnlineUser = ets:foldl( getOnlineUser, [], GroupTable),
+			OnlineUser = ets:foldl( fun getOnlineUser/2, [], GroupTable),
 			ets:foldl(dispatchOnlineUser,OnlineUser,GroupTable),
 			loop( GroupTable);
 		
@@ -100,6 +103,6 @@ dispatchChat({_Nick, Pid}, {Nick, Text}) ->
 	Pid ! {chatUpdate, Nick, Text},
 	{Nick, Text}.
 
-dispacthOnlineUser( {_Nick,Pid}, {OnlineNum,OnlineUser}) ->
+dispatchOnlineUser( {_Nick,Pid}, {OnlineNum,OnlineUser}) ->
 	Pid ! {onLineUserUpdate,OnlineNum,OnlineUser},
-	OnlineUser.
+	{OnlineNum,OnlineUser}.
