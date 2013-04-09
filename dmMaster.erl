@@ -67,9 +67,13 @@ loop( {ServantSet, Preserver}) ->
 					ServantName ! endServant,
 					ets:delete(ServantSet,ServantName);
 				_Any ->
-					ets:insert( ServantSet, ServantName, From, OnlineNum)
+					io:format([_Any]),
+					ets:insert( ServantSet, {ServantName, From, OnlineNum})
 			end,
 			loop({ServantSet,Preserver});
+
+		{'EXIT', Pid, normal} ->
+			io:format("INFO : dmMaster : process ~p exited normally~n",[[pid_to_list(Pid)]]);
 
 			
 		{'EXIT', Pid, Why} ->

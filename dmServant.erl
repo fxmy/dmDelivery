@@ -84,7 +84,7 @@ loop( GroupTable) ->
 			OnlineNumNew = ets:info( GroupTable, size),
 			dmMaster ! {clientExit, OnlineNumNew, self()},
 			OnlineUser = ets:foldl( fun getOnlineUser/2, [], GroupTable),
-			ets:foldl(dispatchOnlineUser,OnlineUser,GroupTable),
+			ets:foldl(fun dispatchOnlineUser/2,{OnlineNumNew,OnlineUser},GroupTable),
 			loop( GroupTable);
 		
 		%% everybody leaves,
