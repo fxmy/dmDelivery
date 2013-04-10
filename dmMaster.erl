@@ -73,7 +73,8 @@ loop( {ServantSet, Preserver}) ->
 			loop({ServantSet,Preserver});
 
 		{'EXIT', Pid, normal} ->
-			io:format("INFO : dmMaster : process ~p exited normally~n",[[pid_to_list(Pid)]]);
+			io:format("INFO : dmMaster : process ~p exited normally~n",[[pid_to_list(Pid)]]),
+			loop({ServantSet,Preserver});
 
 			
 		{'EXIT', Pid, Why} ->
