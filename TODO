@@ -6,14 +6,20 @@
 
 #dmMaster ------ controls many dmServants, manages client number of each group.
 
-conversions between binary & list/tuple
+#conversions between binary & list/tuple
 
-ws_handler -------- OnInit ->
-			sends init msg to dmMaster
-		--- OnMsgArrive ->
-			sends msg to dmServant
-		--- OnTimeOut ->
-			retriveMsg -------- holds here forever if there's no msg
+#ws_handler -------- OnInit ->
+#			sends init msg to dmMaster
+#		--- OnMsgArrive ->
+#			sends msg to dmServant
+#		--- OnTimeOut ->
+#			retriveMsg -------- holds here forever if there's no msg
+
+nick change without reloading page
+
+cookie support
+
+indexpage
 
 dynanmic routing ------ to automatically create channels
 
