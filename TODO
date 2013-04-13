@@ -15,13 +15,13 @@
 #		--- OnTimeOut ->
 #			retriveMsg -------- holds here forever if there's no msg
 
-nick change without reloading page
+#nick change without reloading page
 
 cookie support
 
 indexpage
 
-dynanmic routing ------ to automatically create channels
+#dynanmic routing ------ to automatically create channels
 
 pic dispatch ------ through  base64 enconding or just binary?
 JS stuff ------- makes webpage more pretty
