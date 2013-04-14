@@ -12,7 +12,7 @@ init({tcp, http}, _Req, _Opts) ->
 
 websocket_init(_TransportName, Req, _Opts) ->
 	erlang:start_timer(1000, self(), <<"Hello!">>),
-	io:format("Req: ~p~n",[Req]),
+	io:format("Req: ~p ~p~n",[Req,pid_to_list(self())]),
 	{ok, Req, undefined_state}.
 
 websocket_handle({text, Msg}, Req, State) ->
@@ -27,7 +27,8 @@ websocket_handle({text, Msg}, Req, State) ->
 	%Mb = list_to_atom(Ma),
 	%io:format("Mb ~p~n",[Mb]),
 
-	[FirBin,SecBin,ThirBin] = binary:split(Msg, [<<",">>,<<" ">>], [global]),
+	%[FirBin,SecBin,ThirBin] = binary:split(Msg, [<<",">>,<<" ">>], [global]),
+	[FirBin,SecBin,ThirBin] = binary:split(Msg, [<<"\b">>], [global]),
 	FirAtom = list_to_atom( binary_to_list( FirBin)),
 	io:format("FirstAtom: ~p~n",[FirAtom]),
 
