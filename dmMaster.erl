@@ -11,7 +11,7 @@
 %% when a group's OnlineNum goes zero, sends kill signal to the conresponding dmServant
 %%
 start( _Type,_Args) ->
-	spawn( ?MODULE, realstart,[dontcare,dontcare]).
+	{ok,spawn( ?MODULE, realstart,[dontcare,dontcare])}.
 
 realstart( _Type, _Args) ->
 	%% start the dmMaster.
