@@ -74,6 +74,10 @@ loop( GroupTable) ->
 			ets:foldl( fun dispatchChat/2, {Nick,Text}, GroupTable),
 			loop( GroupTable);
 
+		{img, Nick, Data, From} ->
+			ets:foldl( fun dispatchImg/2, {Nick, Data}, GroupTable),
+			loop( GroupTable);
+
 		{logout, Nick, From} ->
 			%% received from clients
 			%% remove the client from GroupList
@@ -102,6 +106,10 @@ getOnlineUser({Nick, _Pid}, OnlineUser) ->
 dispatchChat({_Nick, Pid}, {Nick, Text}) ->
 	Pid ! {chatUpdate, Nick, Text},
 	{Nick, Text}.
+
+dispatchImg({_Nick, Pid}, {Nick, Data}) ->
+	Pid ! {imgUpdate, Nick, Data},
+	{Nick, Data}.
 
 dispatchOnlineUser( {_Nick,Pid}, {OnlineNum,OnlineUser}) ->
 	Pid ! {onLineUserUpdate,OnlineNum,OnlineUser},

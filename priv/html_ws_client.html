@@ -1,0 +1,241 @@
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Websocket client</title>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/bullet.js"></script>
+<script type="text/javascript">
+	var websocket;
+	var bullet;
+	$(document).ready(init);
+
+	function sendImg() {
+		var inputElement = document.getElementById("imageselector");
+		var file = inputElement.files;
+
+		file2 = file[0];
+
+
+		if(!/image\/\w+/.test(file2.type)){
+			alert("NOT a Img!!");
+			return false;
+		}
+
+		var reader = new FileReader();
+		//read as binary
+		reader.readAsArrayBuffer(file2);
+		//when reading complete
+		reader.onload = function loaded(evt) {
+			var binaryString = evt.target.result;
+			//send file
+			websocket.send(binaryString);
+		}
+	};
+
+	function getRandomString(len) {
+		len = len || 32;
+		var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+		var maxPos = $chars.length;
+		var pwd = '';
+		for (i = 0; i < len; i++) {
+			pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+		}
+		return pwd;
+	};
+
+	function getCookie(c_name) {
+		if (document.cookie.length>0) {
+			return unescape(document.cookie);
+			/*var c_start=document.cookie.indexOf(c_name + "=");
+			if (c_start!=-1) {
+				c_start=c_start + c_name.length+1 ;
+				var c_end=document.cookie.indexOf(";",c_start);
+				if (c_end==-1) c_end=document.cookie.length;
+				return unescape(document.cookie.substring(c_start,c_end));
+			}*/
+		}
+		return ""
+	};
+
+	function setCookie(c_name,value,expiredays) {
+		var exdate=new Date();
+		exdate.setDate(exdate.getDate()+expiredays);
+		document.cookie=c_name+ "=" +escape(value)+((expiredays==null) ? "" : ";expires="+exdate.toGMTString());
+	};
+
+	function changename() {
+		disconnect();
+		setCookie("nick", $("#nickname").val(), 3);
+		connect();
+	};
+
+	function myHTMLEnCode(str) {
+		 var s = "";
+		  s = str.replace(/&/g, "&amp;");
+		  s = s.replace(/</g, "&lt;");
+		  s = s.replace(/>/g, "&gt;");
+		  s = s.replace(/ /g,"&nbsp;");
+		  s = s.replace(/\'/g, "&#39;");
+		  s = s.replace(/\"/g, "&quot;");
+		  //s = s.replace(/\n/g, "<br>");
+		  return s;
+	};
+
+	function init() {
+		var url = window.location.href;
+		var str_temp = url.split('/');
+		attr = str_temp[3];
+		
+		$("#channelId").val(attr);
+
+		if( getCookie("nick") == "") {
+			$("#nickname").val("unknow#" + getRandomString(10));
+			setCookie("nick", $("#nickname").val(), 3);
+		};
+
+
+		$("#nickname").val( getCookie(""));
+		//$("#nickname").val("unknow#" + getRandomString(10));
+		
+		//if (!("WebSocket" in window)) {
+		//	$('#status').append('<p><span style="color: red;">websockets are not supported </span></p>');
+		//	$("#navigation").hide();
+		//} 
+		//else {
+			$('#status').append('<p><span style="color: green;">bullet are supported </span></p>');
+
+			var serverStr="ws://" + str_temp[2] + "/bullet" + "/" + $("#channelId").val() + "/";
+			$("#server").val(serverStr);
+
+			connect();
+		//}
+		//$("#connected").hide();
+		//$("#content").hide();
+	}
+
+	function connect() {
+		wsHost = $("#server").val()
+		//websocket = new WebSocket(wsHost);
+		//showScreen('<b>Connecting to: ' + wsHost + '</b>');
+		//websocket.onopen = function(evt) {
+		//	onOpen(evt)
+		//}
+		//websocket.onclose = function(evt) {
+		//	onClose(evt)
+		//}
+		//websocket.onmessage = function(evt) {
+		//	onMessage(evt)
+		//}
+		//websocket.onerror = function(evt) {
+		//	onError(evt)
+		//}
+
+		bullet = $.bullet(wsHost);
+		bullet.onopen = function(evt){ onOpen(evt);};
+		bullet.ondisconnect = function(evt){ onClose(evt);};
+		bullet.onmessage = function(evt){ onMessage(evt);};
+		bullet.onheartbeat = function(){console.log("ping");bullet.send("ping");};
+		//$("#connected").fadeIn('slow');
+		//$("#content").fadeIn('slow');
+
+
+	}
+
+	function disconnect() {
+		//websocket.close();
+		bullet.close();
+	};
+
+	function toggle_connection() {
+		if (bullet.readyState == bullet.OPEN) {
+			disconnect();
+		} else {
+			connect();
+		}
+	};
+
+	function sendTxt() {
+		//if (bullet.readyState == bullet.OPEN) {
+			txt = $("#nickname").val() + " : " + $("#send_txt").val();
+			finaleComment = "chat\b" + $("#nickname").val() + "\b" + $("#channelId").val()+ "\b" + $("#send_txt").val();
+			bullet.send(finaleComment);
+			showScreen('sending: ' + txt);
+		//} else {
+		//	showScreen('websocket is not connected');
+		//}
+	};
+
+	//function login() {
+		//if (bullet.readyState == bullet.OPEN) {
+			//channel = "group";
+	//		nick = $("#nickname").val();
+	//		finalComm = "login\b" + $("#channelId").val() + "\b" + nick;
+	//		bullet.send(finalComm);
+		//} else {
+		//	showScreen('websocket is not connected, login failled');
+		//}
+	//};
+
+	function onOpen(evt) {
+		showScreen('<span style="color: green;">CONNECTED </span>');
+		//$("#connected").fadeIn('slow');
+		//$("#content").fadeIn('slow');
+
+		//login();
+	};
+
+	function onClose(evt) {
+		showScreen('<span style="color: red;">DISCONNECTED </span>');
+	};
+
+	function onMessage(evt) {
+		showScreen('<span style="color: blue;">RESPONSE: ' + myHTMLEnCode(evt.data) + '</span>');
+	};
+
+	function showScreen(txt) {
+		$('#output').prepend('<p>' + txt + '</p>');
+	};
+
+	function clearScreen() {
+		$('#output').html("");
+	};
+
+</script>
+</head>
+
+<body>
+	<div id="header">
+		<h1>Websocket client</h1>
+		<div id="status"></div>
+	</div>
+
+	<input type="hidden" id="channelId">
+
+	<div id="navigation">
+		<p id="naming">
+		nickname:<input type='text' id="nickname" value="unknown" onblur="changename()"></input>
+		</p>
+
+		<p id="connecting">
+		<input type='text' id="server" value=""></input>
+		<button type="button" onclick="toggle_connection()">connection</button>
+		</p>
+
+		<div id="connected">
+			<p>
+			<input type='text' id="send_txt" value=></input>
+			<button type="button" onclick="sendTxt();">send</button>
+			</p>
+		</div>
+
+		<div id="content">
+			<button id="clear" onclick="clearScreen()">Clear text</button>
+			<div id="output"></div>
+		</div>
+
+	</div>
+</body>
+</html>
+
+

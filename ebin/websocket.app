@@ -1,0 +1,10 @@
+{application,websocket,
+             [{description,"Cowboy websocket example."},
+              {vsn,"1"},
+              {modules,[dmClientPreserver,dmMaster,dmMaster_sup,dmServant,
+                        stream_handler,toppage_handler,websocket,
+                        websocket_app,websocket_sup,ws_handler]},
+              {registered,[]},
+              {applications,[kernel,stdlib,cowboy]},
+              {mod,{websocket_app,[]}},
+              {env,[]}]}.

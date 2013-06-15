@@ -55,14 +55,22 @@ websocket_handle({text, Msg}, Req, State) ->
 			{reply, {text, << "That's what she said! ", Msg/binary >>}, Req, State}
 	end;
 
-websocket_handle({chatUpdate, Nick, Text}, Req, State) ->
-	io:format("WS_HANDLER : INFO : chatUpdate~n"),
-	Message = <<"chatUpdate,",Nick/binary,",",Text/binary>>,
-	{reply, {text, Message}, Req, State};
+% websocket_handle({chatUpdate, Nick, Text}, Req, State) ->
+%	io:format("WS_HANDLER : INFO : chatUpdate, websocket_handle()~n"),
+%	Message = <<"chatUpdate,",Nick/binary,",",Text/binary>>,
+%	{reply, {text, Message}, Req, State};
 
+websocket_handle({binary,Msg}, Req, State) ->
+	io:format("INFO: WS_HANDLER: binary Msg: "),
+	{GroupDest, Nick} = State,
+	GroupDest ! {img, Nick, Msg, self()},
+	%{ _, Nick} = State,
+	%MsgNew = << Nick/binary, 32, Msg/binary>>,
+	{reply, {text, <<"sending img...">>}, Req, State};
 
 websocket_handle(_Data, Req, State) ->
-		{ok, Req, State}.
+	io:format("INFO: WS_HANDLER: _Data: ~p~n", [_Data]),
+	{ok, Req, State}.
 	
 
 	%% {reply, {text, << "That's what she said?", Msg/binary >>}, Req, State};
@@ -78,11 +86,14 @@ websocket_info({onLineUserUpdate, OnlineNum, OnlineUser}, Req, State) ->
 
 
 websocket_info({chatUpdate, Nick, Text}, Req, State) ->
-	io:format("WS_HANDLER : INFO : chatUpdate~n"),
+	io:format("WS_HANDLER : INFO : chatUpdate, websocket_info()~n"),
 	Message = <<"chatUpdate,",Nick/binary,",",Text/binary>>,
 	{reply, {text, Message}, Req, State};
 
 	%{reply, {text, Message}, Req, State};
+	%
+websocket_info({imgUpdate, _Nick, Data}, Req, State) ->
+	{reply, {binary, Data}, Req, State};
 
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
 
