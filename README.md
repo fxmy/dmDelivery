@@ -21,4 +21,3 @@ You can then start the Erlang node with the following command:
 ```
 
 Then point your browser to the indicated URL to open a websocket client.
-Not all browsers support websockets. It was tested with Chromium.
